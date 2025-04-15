@@ -84,8 +84,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-Your Name/Project Link - [@your_twitter_handle](https://twitter.com/your_twitter_handle) - email@example.com
-
 Project Link: [https://github.com/ihou/PhoneMockup](https://github.com/ihou/PhoneMockup)
 
 Live Site: **[https://phonemockup.online/](https://phonemockup.online/)** 
