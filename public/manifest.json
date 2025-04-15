@@ -1,0 +1,21 @@
+{
+  "name": "Phone Mockup - Free 3D Device Mockups",
+  "short_name": "Phone Mockup",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "theme_color": "#1c1f23",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait"
+} 
