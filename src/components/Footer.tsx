@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import { Github, Twitter, Linkedin, Mail } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -17,20 +16,6 @@ export function Footer() {
             <p className="text-gray-600 mb-6 pr-8">
               Create professional device mockups for your app screenshots. Our free Phone Mockup tool helps you showcase your mobile apps with stunning 3D visualizations.
             </p>
-            <div className="flex gap-4">
-              <a href="#" className="text-gray-500 hover:text-[#10b981] transition-colors">
-                <Github size={20} />
-              </a>
-              <a href="#" className="text-gray-500 hover:text-[#10b981] transition-colors">
-                <Twitter size={20} />
-              </a>
-              <a href="#" className="text-gray-500 hover:text-[#10b981] transition-colors">
-                <Linkedin size={20} />
-              </a>
-              <a href="#" className="text-gray-500 hover:text-[#10b981] transition-colors">
-                <Mail size={20} />
-              </a>
-            </div>
           </div>
 
           {/* Quick Links */}
