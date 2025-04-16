@@ -24,7 +24,7 @@ export function PhoneModel({
   const modelRef = useRef<THREE.Group | null>(null);
   const screenRef = useRef<THREE.Mesh | null>(null);
   const texture = useScreenTexture(screenshotUrl);
-  const { gl } = useThree();
+  const { gl, invalidate } = useThree();
   const MODEL_SCALE = 1.0;
   
   // Load the phone model using OBJLoader
@@ -285,6 +285,8 @@ export function PhoneModel({
         x: event.clientX,
         y: event.clientY
       });
+
+      invalidate();
     };
 
     const onPointerUp = () => {
@@ -302,7 +304,7 @@ export function PhoneModel({
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
     };
-  }, [processedObj, gl, isDragging, texture]);
+  }, [processedObj, gl, isDragging, previousTouch.x, previousTouch.y, invalidate, rotationSpeed, texture]);
 
   // 更新纹理
   useEffect(() => {
@@ -333,6 +335,7 @@ export function PhoneModel({
     const handleHorizontalRotation = (event: CustomEvent) => {
       if (modelRef.current && !isDragging) {
         modelRef.current.rotation.y += event.detail;
+        invalidate();
       }
     };
 
@@ -343,12 +346,14 @@ export function PhoneModel({
           Math.min(newRotation, Math.PI / 4),
           -Math.PI / 4
         );
+        invalidate();
       }
     };
 
     const handleZRotation = (event: CustomEvent) => {
       if (modelRef.current && !isDragging) {
         modelRef.current.rotation.z += event.detail;
+        invalidate();
       }
     };
 
@@ -357,6 +362,7 @@ export function PhoneModel({
         modelRef.current.rotation.x = 0;
         modelRef.current.rotation.y = 0;
         modelRef.current.rotation.z = 0;
+        invalidate();
       }
     };
 
@@ -371,7 +377,7 @@ export function PhoneModel({
       window.removeEventListener('rotate-z', handleZRotation as EventListener);
       window.removeEventListener('reset-rotation', handleReset);
     };
-  }, [isDragging]);
+  }, [isDragging, invalidate]);
 
   return (
     <group ref={modelRef}>

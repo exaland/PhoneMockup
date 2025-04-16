@@ -26,7 +26,7 @@ const presetPoses: { name: PresetAngleName; rotation: THREE.Euler }[] = [
 
 // 相机控制组件
 function CameraController({ zoom }: { zoom: number }) {
-  const { camera } = useThree();
+  const { camera, invalidate } = useThree();
   
   useEffect(() => {
     const targetZ = zoom;
@@ -43,13 +43,15 @@ function CameraController({ zoom }: { zoom: number }) {
       
       camera.position.z = startZ + (targetZ - startZ) * easeProgress;
       
+      invalidate();
+
       if (progress < 1) {
         requestAnimationFrame(animate);
       }
     }
 
     animate();
-  }, [camera, zoom]);
+  }, [camera, zoom, invalidate]);
   
   return null;
 }
@@ -66,7 +68,7 @@ function ModelAnimationController({
   positionX: number;
   positionY: number;
 }) {
-  const { scene } = useThree();
+  const { scene, invalidate } = useThree();
   const phoneModel = scene.getObjectByName('iphone');
   
   useEffect(() => {
@@ -85,11 +87,11 @@ function ModelAnimationController({
     const duration = 300;
     const startTime = Date.now();
 
+    let animationFrameId: number;
     function animate() {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // 使用 easeOutQuad 缓动函数
       const easeProgress = 1 - (1 - progress) * (1 - progress);
       
       if (phoneModel) {
@@ -99,26 +101,35 @@ function ModelAnimationController({
         phoneModel.position.y = startPositionY + (targetPositionY - startPositionY) * easeProgress;
       }
       
+      invalidate();
+
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        animationFrameId = requestAnimationFrame(animate);
+      } else {
+        invalidate();
       }
     }
 
     animate();
-  }, [phoneModel, rotationX, rotationY, positionX, positionY]);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [phoneModel, rotationX, rotationY, positionX, positionY, invalidate]);
 
   return null;
 }
 
 function SceneCapture() {
-  const { gl, scene, camera } = useThree();
+  const { gl, scene, camera, invalidate } = useThree();
   
   useEffect(() => {
     // @ts-ignore
     gl.domElement.scene = scene;
     // @ts-ignore
     gl.domElement.camera = camera;
-  }, [gl, scene, camera]);
+    invalidate();
+  }, [gl, scene, camera, invalidate]);
   
   return null;
 }
@@ -129,11 +140,12 @@ interface Scene3DProps {
 }
 
 function ExportHelper({ onExport }: { onExport: (scene: THREE.Scene, camera: THREE.Camera) => void }) {
-  const { scene, camera } = useThree();
+  const { scene, camera, invalidate } = useThree();
   
   useEffect(() => {
     onExport(scene, camera);
-  }, [scene, camera, onExport]);
+    invalidate();
+  }, [scene, camera, onExport, invalidate]);
   
   return null;
 }
@@ -141,7 +153,7 @@ function ExportHelper({ onExport }: { onExport: (scene: THREE.Scene, camera: THR
 // 背景组件
 function Background({ imageUrl }: { imageUrl: string }) {
   const texture = useLoader(THREE.TextureLoader, imageUrl);
-  const { viewport, camera } = useThree();
+  const { viewport, camera, invalidate } = useThree();
   
   useEffect(() => {
     if (texture && texture.image) {
@@ -167,8 +179,9 @@ function Background({ imageUrl }: { imageUrl: string }) {
       }
       
       texture.needsUpdate = true;
+      invalidate();
     }
-  }, [texture, viewport]);
+  }, [texture, viewport, invalidate]);
 
   return (
     <mesh position={[0, 0, -30]}>
@@ -506,9 +519,9 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
   };
 
   // 应用预设姿势
-  const applyPresetPose = (rotation: THREE.Euler) => {
-    const event = new CustomEvent('reset-rotation');
-    window.dispatchEvent(event);
+  const applyPresetPose = useCallback((rotation: THREE.Euler) => {
+    const resetEvent = new CustomEvent('reset-rotation');
+    window.dispatchEvent(resetEvent);
     
     setTimeout(() => {
       const horizontalEvent = new CustomEvent('rotate-horizontal', { detail: rotation.y });
@@ -519,7 +532,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
       window.dispatchEvent(verticalEvent);
       window.dispatchEvent(zRotationEvent);
     }, 50);
-  };
+  }, []);
 
   const [modelRotationX, setModelRotationX] = useState(0);
   const [modelRotationY, setModelRotationY] = useState(0);
@@ -673,6 +686,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
           }}
           linear
           flat
+          frameloop={isAutoRotating ? 'always' : 'demand'}
         >
           <Suspense fallback={null}>
             <CameraController zoom={zoom} />
