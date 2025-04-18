@@ -11,6 +11,8 @@ interface PhoneModelProps {
   roughness: number;
   onLoadProgress?: (progress: number) => void;
   rotationDirection?: 'clockwise' | 'counterclockwise';
+  paddingHorizontal: number;
+  paddingVertical: number;
 }
 
 export function PhoneModel({ 
@@ -20,6 +22,8 @@ export function PhoneModel({
   roughness,
   onLoadProgress,
   rotationDirection = 'clockwise',
+  paddingHorizontal,
+  paddingVertical,
 }: PhoneModelProps) {
   const modelRef = useRef<THREE.Group | null>(null);
   const screenRef = useRef<THREE.Mesh | null>(null);
@@ -197,64 +201,65 @@ export function PhoneModel({
   useEffect(() => {
     if (!processedObj || !modelRef.current) return;
     
-    const modelGroup = new THREE.Group();
-    modelGroup.add(processedObj);
+    const modelGroup = new THREE.Group(); 
+    modelGroup.add(processedObj.clone()); 
     
-    const box = new THREE.Box3().setFromObject(processedObj);
+    const box = new THREE.Box3().setFromObject(processedObj); 
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     
-    processedObj.position.sub(center);
+    modelGroup.children[0].position.sub(center); 
     
     const screenGroup = new THREE.Group();
+    screenGroup.name = 'screenGroup';
     
-    const SCREEN_WIDTH_RATIO = 0.9;
-    const SCREEN_HEIGHT_RATIO = 0.95;
-    const SCREEN_OFFSET_Y = 0.02;
+    // Calculate ratios based on separate padding props
+    const widthRatio = 1.0 - paddingHorizontal;
+    const heightRatio = 1.0 - paddingVertical;
+    const SCREEN_WIDTH_RATIO = widthRatio; 
+    const SCREEN_HEIGHT_RATIO = heightRatio; 
+    const SCREEN_OFFSET_Y = 0.005; 
+    const screenZFactor = 0.52; 
     
     const screenWidth = size.x * MODEL_SCALE * SCREEN_WIDTH_RATIO;
     const screenHeight = size.y * MODEL_SCALE * SCREEN_HEIGHT_RATIO;
     
-    // 创建屏幕背景 - 改完全透明
+    // Create screen background geometry
     const bgGeometry = new THREE.PlaneGeometry(screenWidth, screenHeight, 1, 1);
     const bgMaterial = new THREE.MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,  // 完全透明
-      side: THREE.FrontSide,
-      depthWrite: false,
-      depthTest: true,
+        transparent: true, opacity: 0, side: THREE.FrontSide,
+        depthWrite: false, depthTest: true,
     });
     const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
+    bgMesh.name = 'screenBg';
     bgMesh.position.z = -0.001;
     screenGroup.add(bgMesh);
 
-    // 创建屏幕显示层
+    // Create screen display geometry
     const screenGeometry = new THREE.PlaneGeometry(screenWidth, screenHeight, 1, 1);
     const screenMaterial = new THREE.MeshBasicMaterial({
-      map: texture,
-      transparent: true,
-      opacity: texture ? 1 : 0,  // 有截图时显示，无截图时透明
-      depthWrite: false,
-      depthTest: true,
-      side: THREE.FrontSide,
-      toneMapped: false,
+        map: texture, // Use original texture for now
+        transparent: true,
+        opacity: texture ? 1 : 0, 
+        depthWrite: false, depthTest: true,
+        side: THREE.FrontSide, toneMapped: false,
     });
-    
     const screenMesh = new THREE.Mesh(screenGeometry, screenMaterial);
-    screenRef.current = screenMesh;
+    screenRef.current = screenMesh; 
     screenGroup.add(screenMesh);
     
-    const screenZ = (size.z * MODEL_SCALE * 0.51) + 0.001;
+    const screenZ = (size.z * MODEL_SCALE * screenZFactor) + 0.001;
     screenGroup.position.set(0, SCREEN_OFFSET_Y, screenZ);
     
     modelGroup.add(screenGroup);
     
-    // 清除现有的子元素
+    // Always update modelRef.current children
     while (modelRef.current.children.length > 0) {
-      modelRef.current.remove(modelRef.current.children[0]);
+        modelRef.current.remove(modelRef.current.children[0]);
     }
-    
     modelRef.current.add(modelGroup);
+    
+    invalidate(); 
 
     const canvas = gl.domElement;
 
@@ -304,17 +309,7 @@ export function PhoneModel({
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
     };
-  }, [processedObj, gl, isDragging, previousTouch.x, previousTouch.y, invalidate, rotationSpeed, texture]);
-
-  // 更新纹理
-  useEffect(() => {
-    if (screenRef.current && texture) {
-      const material = screenRef.current.material as THREE.MeshBasicMaterial;
-      material.map = texture;
-      material.opacity = texture ? 1 : 0;
-      material.needsUpdate = true;
-    }
-  }, [texture]);
+  }, [processedObj, gl, isDragging, previousTouch.x, previousTouch.y, invalidate, rotationSpeed, texture, paddingHorizontal, paddingVertical]);
 
   // 自动旋转
   useEffect(() => {

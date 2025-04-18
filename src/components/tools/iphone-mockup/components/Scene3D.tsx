@@ -216,6 +216,9 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
   const [pointLightIntensity, setPointLightIntensity] = useState(0.5);
   const [metalness, setMetalness] = useState(0.9);
   const [roughness, setRoughness] = useState(0.2);
+  // Separate padding states
+  const [paddingHorizontal, setPaddingHorizontal] = useState(0.07); // Initial horizontal padding (7%)
+  const [paddingVertical, setPaddingVertical] = useState(0.07);   // Initial vertical padding (7%)
 
   // 预设场景尺寸
   const presetSizes = [
@@ -708,6 +711,8 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                 roughness={roughness}
                 onLoadProgress={setLoadingProgress}
                 rotationDirection={rotationDirection}
+                paddingHorizontal={paddingHorizontal}
+                paddingVertical={paddingVertical}
               />
             </group>
 
@@ -919,7 +924,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
           <div className="space-y-3">
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label htmlFor="metalness" className="text-sm text-gray-600">Metalness</label>
+                <label htmlFor="metalness" className="text-sm text-gray-600">Shell Metalness</label>
                 <span className="text-xs text-gray-500">{metalness.toFixed(1)}</span>
               </div>
               <input
@@ -936,7 +941,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
             
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label htmlFor="roughness" className="text-sm text-gray-600">Roughness</label>
+                <label htmlFor="roughness" className="text-sm text-gray-600">Shell Roughness</label>
                 <span className="text-xs text-gray-500">{roughness.toFixed(1)}</span>
               </div>
               <input
@@ -947,6 +952,36 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                 step="0.1"
                 value={roughness}
                 onChange={(e) => setRoughness(Number(e.target.value))}
+                className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#6ee7b7]"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="paddingHorizontal" className="text-sm text-gray-600">Horizontal Padding</label>
+                <span className="text-xs text-gray-500">{((1-paddingHorizontal) * 100).toFixed(0)}% width</span> 
+              </div>
+              <input
+                id="paddingHorizontal"
+                type="range"
+                min="0.01" max="0.20" step="0.005"
+                value={paddingHorizontal}
+                onChange={(e) => setPaddingHorizontal(Number(e.target.value))}
+                className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#6ee7b7]"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="paddingVertical" className="text-sm text-gray-600">Vertical Padding</label>
+                <span className="text-xs text-gray-500">{((1-paddingVertical) * 100).toFixed(0)}% height</span> 
+              </div>
+              <input
+                id="paddingVertical"
+                type="range"
+                min="0.01" max="0.20" step="0.005"
+                value={paddingVertical}
+                onChange={(e) => setPaddingVertical(Number(e.target.value))}
                 className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#6ee7b7]"
               />
             </div>
