@@ -2,7 +2,7 @@ import { Suspense, useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas, useThree, useLoader } from '@react-three/fiber';
 import { PhoneModel } from './PhoneModel';
 import { SceneLighting } from './SceneLighting';
-import { Download, Smartphone, MoveHorizontal, MoveVertical } from 'lucide-react';
+import { Download, Smartphone, MoveHorizontal, MoveVertical, Save, Trash2, Play } from 'lucide-react';
 import * as THREE from 'three';
 import html2canvas from 'html2canvas';
 
@@ -69,53 +69,25 @@ function ModelAnimationController({
   positionY: number;
 }) {
   const { scene, invalidate } = useThree();
-  const phoneModel = scene.getObjectByName('iphone');
+  const phoneModel = scene.getObjectByName('phoneModelGroup');
   
+  // Temporarily disable animation, directly set properties
+  useEffect(() => {
+    if (phoneModel) {
+      phoneModel.rotation.x = rotationX;
+      phoneModel.rotation.y = rotationY;
+      phoneModel.position.x = positionX;
+      phoneModel.position.y = positionY;
+      invalidate(); // Ensure the scene re-renders with the new state
+    }
+  }, [phoneModel, rotationX, rotationY, positionX, positionY, invalidate]);
+
+  /* Original Animation Logic (Commented out for testing)
   useEffect(() => {
     if (!phoneModel) return;
-
-    const startRotationX = phoneModel.rotation.x;
-    const startRotationY = phoneModel.rotation.y;
-    const startPositionX = phoneModel.position.x;
-    const startPositionY = phoneModel.position.y;
-    
-    const targetRotationX = rotationX;
-    const targetRotationY = rotationY;
-    const targetPositionX = positionX;
-    const targetPositionY = positionY;
-    
-    const duration = 300;
-    const startTime = Date.now();
-
-    let animationFrameId: number;
-    function animate() {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      
-      const easeProgress = 1 - (1 - progress) * (1 - progress);
-      
-      if (phoneModel) {
-        phoneModel.rotation.x = startRotationX + (targetRotationX - startRotationX) * easeProgress;
-        phoneModel.rotation.y = startRotationY + (targetRotationY - startRotationY) * easeProgress;
-        phoneModel.position.x = startPositionX + (targetPositionX - startPositionX) * easeProgress;
-        phoneModel.position.y = startPositionY + (targetPositionY - startPositionY) * easeProgress;
-      }
-      
-      invalidate();
-
-      if (progress < 1) {
-        animationFrameId = requestAnimationFrame(animate);
-      } else {
-        invalidate();
-      }
-    }
-
-    animate();
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
+// ... (rest of the original animation useEffect code) ...
   }, [phoneModel, rotationX, rotationY, positionX, positionY, invalidate]);
+  */
 
   return null;
 }
@@ -196,6 +168,20 @@ function Background({ imageUrl }: { imageUrl: string }) {
   );
 }
 
+// Preset interfaces (Add these)
+interface PresetValue {
+  zoom: number;
+  posX: number;
+  posY: number;
+  rotX: number; // Stored in radians
+  rotY: number; // Stored in radians
+}
+
+interface Preset {
+  name: string;
+  values: PresetValue;
+}
+
 export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
   const [isAutoRotating, setIsAutoRotating] = useState(false);
   const [rotationDirection, setRotationDirection] = useState<'clockwise' | 'counterclockwise'>('clockwise');
@@ -217,8 +203,35 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
   const [metalness, setMetalness] = useState(0.9);
   const [roughness, setRoughness] = useState(0.2);
   // Separate padding states
-  const [paddingHorizontal, setPaddingHorizontal] = useState(0.09); // Default 94% width
-  const [paddingVertical, setPaddingVertical] = useState(0.04);   // Default 98% height
+  const [paddingHorizontal, setPaddingHorizontal] = useState(0.07); // Default 93% width
+  const [paddingVertical, setPaddingVertical] = useState(0.03);   // Default 97% height
+  
+  const [modelRotationX, setModelRotationX] = useState(0);
+  const [modelRotationY, setModelRotationY] = useState(0);
+
+  // State for presets (Add this)
+  const [savedPresets, setSavedPresets] = useState<Preset[]>([]);
+  const LOCAL_STORAGE_KEY = 'phoneMockupPresets';
+
+  // Load presets on mount (Add this useEffect)
+  useEffect(() => {
+    try {
+      const storedPresets = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedPresets) {
+        const parsedPresets = JSON.parse(storedPresets);
+        // Basic validation
+        if (Array.isArray(parsedPresets)) {
+           setSavedPresets(parsedPresets);
+        } else {
+           console.error("Invalid presets found in localStorage:", parsedPresets);
+           localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear invalid data
+        }
+      }
+    } catch (error) {
+      console.error("Error loading presets from localStorage:", error);
+      localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear potentially corrupted data
+    }
+  }, []); 
 
   // 预设场景尺寸
   const presetSizes = [
@@ -523,6 +536,14 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
 
   // 应用预设姿势
   const applyPresetPose = useCallback((rotation: THREE.Euler) => {
+    // Directly set state instead of dispatching events
+    setModelRotationX(rotation.x);
+    setModelRotationY(rotation.y);
+    // Optionally reset position when applying angle presets
+    setPositionX(0);
+    setPositionY(0);
+
+    /* Original event dispatch logic (commented out)
     const resetEvent = new CustomEvent('reset-rotation');
     window.dispatchEvent(resetEvent);
     
@@ -535,38 +556,81 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
       window.dispatchEvent(verticalEvent);
       window.dispatchEvent(zRotationEvent);
     }, 50);
-  }, []);
+    */
+  }, [setModelRotationX, setModelRotationY, setPositionX, setPositionY]); // Add setters to dependency array
 
-  const [modelRotationX, setModelRotationX] = useState(0);
-  const [modelRotationY, setModelRotationY] = useState(0);
+  // Define the rotation change handler
+  const handleRotationChange = useCallback((deltaX: number, deltaY: number) => {
+    setModelRotationX(prev => {
+      // Clamp X rotation to prevent flipping over
+      const newRotation = prev + deltaX;
+      return Math.max(Math.min(newRotation, Math.PI / 2), -Math.PI / 2); // Clamp between -90 and +90 degrees
+    });
+    setModelRotationY(prev => prev + deltaY);
+  }, []); // No dependencies needed as it only uses setters
 
-  // 更新旋转事件处理
-  useEffect(() => {
-    const handleRotateHorizontal = (e: CustomEvent) => {
-      setModelRotationY(prev => prev + e.detail);
+  // --- Preset Handling Functions (Add these) ---
+  const handleSavePreset = () => {
+    const presetName = prompt("Enter a name for this preset:", `Preset ${savedPresets.length + 1}`);
+    if (!presetName) {
+      return; // User cancelled
+    }
+  
+    // Check for duplicate name
+    if (savedPresets.some(p => p.name === presetName)) {
+      alert(`Preset name "${presetName}" already exists. Please choose a different name.`);
+      return;
+    }
+  
+    const newPreset: Preset = {
+      name: presetName,
+      values: {
+        zoom: zoom,
+        posX: positionX,
+        posY: positionY,
+        rotX: modelRotationX, // Save radians
+        rotY: modelRotationY, // Save radians
+      },
     };
-    
-    const handleRotateVertical = (e: CustomEvent) => {
-      setModelRotationX(prev => prev + e.detail);
-    };
-    
-    const handleResetRotation = () => {
-      setModelRotationX(0);
-      setModelRotationY(0);
-      setPositionX(0);
-      setPositionY(0);
-    };
+  
+    const updatedPresets = [...savedPresets, newPreset];
+    setSavedPresets(updatedPresets);
+    try {
+       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedPresets));
+       alert(`Preset "${presetName}" saved!`);
+    } catch (error) {
+       console.error("Error saving presets to localStorage:", error);
+       alert("Failed to save preset.");
+       // Optionally revert state if saving fails
+       setSavedPresets(savedPresets);
+    }
+  };
 
-    window.addEventListener('rotate-horizontal', handleRotateHorizontal as EventListener);
-    window.addEventListener('rotate-vertical', handleRotateVertical as EventListener);
-    window.addEventListener('reset-rotation', handleResetRotation);
+  const handleApplyPreset = (preset: Preset) => {
+    setZoom(preset.values.zoom);
+    setPositionX(preset.values.posX);
+    setPositionY(preset.values.posY);
+    // Directly set rotation state, ModelAnimationController will handle the animation
+    setModelRotationX(preset.values.rotX);
+    setModelRotationY(preset.values.rotY);
+  };
 
-    return () => {
-      window.removeEventListener('rotate-horizontal', handleRotateHorizontal as EventListener);
-      window.removeEventListener('rotate-vertical', handleRotateVertical as EventListener);
-      window.removeEventListener('reset-rotation', handleResetRotation);
-    };
-  }, []);
+  const handleDeletePreset = (presetNameToDelete: string) => {
+    if (!confirm(`Are you sure you want to delete the preset "${presetNameToDelete}"?`)) {
+        return;
+    }
+    const updatedPresets = savedPresets.filter(p => p.name !== presetNameToDelete);
+    setSavedPresets(updatedPresets);
+     try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedPresets));
+     } catch (error) {
+        console.error("Error saving presets after deletion:", error);
+        alert("Failed to update presets after deletion.");
+        // Optionally revert state
+        setSavedPresets(savedPresets);
+     }
+  };
+  // --- End Preset Handling Functions ---
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -714,8 +778,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                 rotationDirection={rotationDirection}
                 paddingHorizontal={paddingHorizontal}
                 paddingVertical={paddingVertical}
-                setModelRotationX={setModelRotationX}
-                setModelRotationY={setModelRotationY}
+                onRotationChange={handleRotationChange}
               />
             </group>
 
@@ -798,16 +861,56 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
         </Canvas>
       </div>
 
-      {/* Parameter Display Area */}
-      <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 mt-4 mb-2 text-xs text-gray-600 grid grid-cols-5 gap-2 shadow-sm">
-        <div>Zoom: <span className="font-mono text-gray-800">{ zoom.toFixed(1) }</span></div>
-        <div>H Pos: <span className="font-mono text-gray-800">{ positionX.toFixed(1) }</span></div>
-        <div>V Pos: <span className="font-mono text-gray-800">{ positionY.toFixed(1) }</span></div>
-        <div>X Rot: <span className="font-mono text-gray-800">{ (modelRotationX * 180 / Math.PI).toFixed(1) }°</span></div>
-        <div>Y Rot: <span className="font-mono text-gray-800">{ (modelRotationY * 180 / Math.PI).toFixed(1) }°</span></div>
+      {/* Parameter Display & Save Preset Button (Modify this section) */}
+      <div className="w-full flex items-center justify-between gap-4 mt-4 mb-2">
+        <div className="flex-grow bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 grid grid-cols-5 gap-2 shadow-sm">
+          <div>Zoom: <span className="font-mono text-gray-800">{ zoom.toFixed(1) }</span></div>
+          <div>H Pos: <span className="font-mono text-gray-800">{ positionX.toFixed(1) }</span></div>
+          <div>V Pos: <span className="font-mono text-gray-800">{ positionY.toFixed(1) }</span></div>
+          <div>X Rot: <span className="font-mono text-gray-800">{ (modelRotationX * 180 / Math.PI).toFixed(1) }°</span></div>
+          <div>Y Rot: <span className="font-mono text-gray-800">{ (modelRotationY * 180 / Math.PI).toFixed(1) }°</span></div>
+        </div>
+        <button
+          onClick={handleSavePreset}
+          className="flex items-center gap-2 px-4 py-2 bg-white text-[#1c1f23] border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm text-sm"
+          title="Save Current View as Preset"
+        >
+          <Save size={14} />
+          Save Preset
+        </button>
       </div>
+      
+      {/* Saved Presets List (Updated UI/UX) */}
+      {savedPresets.length > 0 && (
+        <div className="w-full bg-white border border-gray-100 rounded-xl shadow-sm p-4 mb-4">
+          <h3 className="text-sm font-medium text-[#1c1f23] mb-3">Saved Presets</h3>
+          <div className="flex flex-wrap gap-2">
+            {savedPresets.map((preset) => (
+              <div key={preset.name} className="relative group">
+                <button
+                  onClick={() => handleApplyPreset(preset)}
+                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm transition-colors shadow-sm pr-8" // Add padding-right for delete button space
+                  title={`Apply preset: ${preset.name}`}
+                >
+                  {preset.name}
+                </button>
+                <button
+                   onClick={(e) => {
+                       e.stopPropagation(); // Prevent applying preset when deleting
+                       handleDeletePreset(preset.name);
+                   }}
+                   className="absolute top-1/2 right-1.5 transform -translate-y-1/2 p-1 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                   title="Delete Preset"
+                 >
+                   <Trash2 size={14} />
+                 </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* 控制面板 */}
+      {/* Control Panels */}
       <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
         {/* 模型控制 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
@@ -863,7 +966,12 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
             
             <div className="flex justify-between mt-4">
               <button
-                onClick={() => window.dispatchEvent(new CustomEvent('reset-rotation'))}
+                onClick={() => {
+                  setModelRotationX(0);
+                  setModelRotationY(0);
+                  setPositionX(0);
+                  setPositionY(0);
+                }}
                 className="flex items-center justify-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 shadow-sm text-sm"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -887,6 +995,36 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                 {isAutoRotating ? 'Stop Rotation' : 'Auto Rotate'}
               </button>
             </div>
+
+            {/* Add Rotation Direction Control Here */}
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="rotDir" className="text-sm text-gray-600">Auto-Rotation Direction</label>
+              </div>
+              <div className="flex border rounded-lg overflow-hidden shadow-sm">
+                <button
+                  onClick={() => setRotationDirection('clockwise')}
+                  className={`w-1/2 py-1.5 text-xs ${
+                    rotationDirection === 'clockwise'
+                      ? 'bg-[#6ee7b7]/10 text-[#10b981] font-medium'
+                      : 'bg-white hover:bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  Clockwise
+                </button>
+                <button
+                  onClick={() => setRotationDirection('counterclockwise')}
+                  className={`w-1/2 py-1.5 text-xs ${
+                    rotationDirection === 'counterclockwise'
+                      ? 'bg-[#6ee7b7]/10 text-[#10b981] font-medium'
+                      : 'bg-white hover:bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  Counter-clockwise
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
         
@@ -996,34 +1134,6 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                 onChange={(e) => setPaddingVertical(Number(e.target.value))}
                 className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#6ee7b7]"
               />
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label htmlFor="rotDir" className="text-sm text-gray-600">Rotation Direction</label>
-              </div>
-              <div className="flex border rounded-lg overflow-hidden shadow-sm">
-                <button
-                  onClick={() => setRotationDirection('clockwise')}
-                  className={`w-1/2 py-1.5 text-xs ${
-                    rotationDirection === 'clockwise'
-                      ? 'bg-[#6ee7b7]/10 text-[#10b981] font-medium'
-                      : 'bg-white hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  Clockwise
-                </button>
-                <button
-                  onClick={() => setRotationDirection('counterclockwise')}
-                  className={`w-1/2 py-1.5 text-xs ${
-                    rotationDirection === 'counterclockwise'
-                      ? 'bg-[#6ee7b7]/10 text-[#10b981] font-medium'
-                      : 'bg-white hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  Counter-clockwise
-                </button>
-              </div>
             </div>
           </div>
         </div>

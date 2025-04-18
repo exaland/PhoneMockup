@@ -13,8 +13,7 @@ interface PhoneModelProps {
   rotationDirection?: 'clockwise' | 'counterclockwise';
   paddingHorizontal: number;
   paddingVertical: number;
-  setModelRotationX?: (value: number) => void;
-  setModelRotationY?: (value: number) => void;
+  onRotationChange?: (deltaX: number, deltaY: number) => void;
 }
 
 export function PhoneModel({ 
@@ -26,8 +25,7 @@ export function PhoneModel({
   rotationDirection = 'clockwise',
   paddingHorizontal,
   paddingVertical,
-  setModelRotationX,
-  setModelRotationY,
+  onRotationChange,
 }: PhoneModelProps) {
   const modelRef = useRef<THREE.Group | null>(null);
   const screenRef = useRef<THREE.Mesh | null>(null);
@@ -282,23 +280,13 @@ export function PhoneModel({
       const deltaX = (event.clientX - previousTouch.x) * rotationSpeed;
       const deltaY = (event.clientY - previousTouch.y) * rotationSpeed;
 
-      modelRef.current.rotation.y += deltaX;
-      modelRef.current.rotation.x += deltaY;
-
-      modelRef.current.rotation.x = Math.max(
-        Math.min(modelRef.current.rotation.x, Math.PI / 4),
-        -Math.PI / 4
-      );
+      // Notify parent about rotation delta
+      onRotationChange?.(deltaY, deltaX);
 
       setPreviousTouch({
         x: event.clientX,
         y: event.clientY
       });
-
-      invalidate();
-      // Notify parent about rotation change
-      setModelRotationX?.(modelRef.current.rotation.x);
-      setModelRotationY?.(modelRef.current.rotation.y);
     };
 
     const onPointerUp = () => {
@@ -316,7 +304,7 @@ export function PhoneModel({
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
     };
-  }, [processedObj, gl, isDragging, previousTouch.x, previousTouch.y, invalidate, rotationSpeed, texture, paddingHorizontal, paddingVertical, setModelRotationX, setModelRotationY]);
+  }, [processedObj, gl, isDragging, previousTouch.x, previousTouch.y, invalidate, rotationSpeed, texture, paddingHorizontal, paddingVertical, onRotationChange]);
 
   // 自动旋转
   useEffect(() => {
@@ -325,66 +313,16 @@ export function PhoneModel({
         if (modelRef.current) {
           // 根据旋转方向设置旋转速度
           const rotationAmount = rotationDirection === 'clockwise' ? -0.01 : 0.01;
-          modelRef.current.rotation.y += rotationAmount;
-          // Notify parent about rotation change
-          setModelRotationY?.(modelRef.current.rotation.y);
+          // Notify parent about rotation delta
+          onRotationChange?.(0, rotationAmount);
         }
       }, 16);
       return () => clearInterval(interval);
     }
-  }, [isAutoRotating, isDragging, rotationDirection, setModelRotationY]);
-
-  // 添加角度控制和复位功能
-  useEffect(() => {
-    const handleHorizontalRotation = (event: CustomEvent) => {
-      if (modelRef.current && !isDragging) {
-        modelRef.current.rotation.y += event.detail;
-        invalidate();
-      }
-    };
-
-    const handleVerticalRotation = (event: CustomEvent) => {
-      if (modelRef.current && !isDragging) {
-        const newRotation = modelRef.current.rotation.x + event.detail;
-        modelRef.current.rotation.x = Math.max(
-          Math.min(newRotation, Math.PI / 4),
-          -Math.PI / 4
-        );
-        invalidate();
-      }
-    };
-
-    const handleZRotation = (event: CustomEvent) => {
-      if (modelRef.current && !isDragging) {
-        modelRef.current.rotation.z += event.detail;
-        invalidate();
-      }
-    };
-
-    const handleReset = () => {
-      if (modelRef.current) {
-        modelRef.current.rotation.x = 0;
-        modelRef.current.rotation.y = 0;
-        modelRef.current.rotation.z = 0;
-        invalidate();
-      }
-    };
-
-    window.addEventListener('rotate-horizontal', handleHorizontalRotation as EventListener);
-    window.addEventListener('rotate-vertical', handleVerticalRotation as EventListener);
-    window.addEventListener('rotate-z', handleZRotation as EventListener);
-    window.addEventListener('reset-rotation', handleReset);
-
-    return () => {
-      window.removeEventListener('rotate-horizontal', handleHorizontalRotation as EventListener);
-      window.removeEventListener('rotate-vertical', handleVerticalRotation as EventListener);
-      window.removeEventListener('rotate-z', handleZRotation as EventListener);
-      window.removeEventListener('reset-rotation', handleReset);
-    };
-  }, [isDragging, invalidate]);
+  }, [isAutoRotating, isDragging, rotationDirection, onRotationChange]);
 
   return (
-    <group ref={modelRef}>
+    <group ref={modelRef} name="phoneModelGroup">
       <primitive 
         object={processedObj || obj}
         scale={[MODEL_SCALE, MODEL_SCALE, MODEL_SCALE]}
