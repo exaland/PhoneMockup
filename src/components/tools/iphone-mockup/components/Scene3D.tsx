@@ -1,5 +1,5 @@
 import { Suspense, useState, useRef, useEffect, useCallback } from 'react';
-import { Canvas, useThree, useLoader, useFrame } from '@react-three/fiber';
+import { Canvas, useThree, useLoader } from '@react-three/fiber';
 import { PhoneModel } from './PhoneModel';
 import { SceneLighting } from './SceneLighting';
 import { Download, Smartphone, MoveHorizontal, MoveVertical, Save, Trash2, Play } from 'lucide-react';
@@ -182,42 +182,13 @@ interface Preset {
   values: PresetValue;
 }
 
-// Loader component using a rotating Torus
-function Loader() {
-  const meshRef = useRef<THREE.Mesh>(null!); // Ref for the mesh
-
-  // Rotate the mesh on every frame
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      // Rotate around Y-axis (main spin) and slightly around X-axis
-      meshRef.current.rotation.y += delta * 2; // Adjust speed by changing the multiplier
-      meshRef.current.rotation.x += delta * 0.5;
-    }
-  });
-
-  return (
-    // Scale the mesh up to make it more visible in the scene
-    <mesh ref={meshRef} scale={2}> {/* Reduced scale */} 
-      {/* args: radius, tubeRadius, radialSegments, tubularSegments */}
-      <torusGeometry args={[1, 0.1, 16, 100]} /> 
-      {/* Use a visually appealing material */}
-      <meshStandardMaterial 
-        color="#6ee7b7" // A color matching the theme
-        metalness={0.5} 
-        roughness={0.3} 
-        emissive="#10b981" // Give it a slight glow
-        emissiveIntensity={0.5}
-      />
-    </mesh>
-  );
-}
-
 export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
   const [isAutoRotating, setIsAutoRotating] = useState(false);
   const [rotationDirection, setRotationDirection] = useState<'clockwise' | 'counterclockwise'>('clockwise');
   const [zoom, setZoom] = useState(45);
   const [positionX, setPositionX] = useState(0);
   const [positionY, setPositionY] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showBackground, setShowBackground] = useState(true);
@@ -747,6 +718,20 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
           backgroundRepeat: 'no-repeat',
         }}
       >
+        {loadingProgress > 0 && loadingProgress < 1 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1c1f23]/80 backdrop-blur-sm z-10">
+            <div className="w-64 h-3 bg-gray-200 rounded-full overflow-hidden shadow-lg">
+              <div 
+                className="h-full bg-[#6ee7b7] transition-all duration-500 ease-out"
+                style={{ width: `${loadingProgress * 100}%` }}
+              />
+            </div>
+            <p className="mt-3 text-sm text-white font-medium">
+              Loading... {Math.round(loadingProgress * 100)}%
+            </p>
+          </div>
+        )}
+        
         <Canvas
           ref={canvasRef}
           dpr={[1, 2]}
@@ -771,7 +756,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
           flat
           frameloop={isAutoRotating ? 'always' : 'demand'}
         >
-          <Suspense fallback={<Loader />}>
+          <Suspense fallback={null}>
             <CameraController zoom={zoom} />
             <ModelAnimationController 
               rotationX={modelRotationX}
@@ -789,6 +774,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                 isAutoRotating={isAutoRotating}
                 metalness={metalness}
                 roughness={roughness}
+                onLoadProgress={setLoadingProgress}
                 rotationDirection={rotationDirection}
                 paddingHorizontal={paddingHorizontal}
                 paddingVertical={paddingVertical}
