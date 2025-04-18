@@ -681,13 +681,14 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
             depth: true,
             stencil: false,
             logarithmicDepthBuffer: true,
+            outputColorSpace: THREE.SRGBColorSpace,
+            toneMapping: THREE.NoToneMapping,
           }}
           style={{
             width: '100%',
             height: '100%',
             background: backgroundImage ? 'transparent' : '#f0f0f0',
           }}
-          linear
           flat
           frameloop={isAutoRotating ? 'always' : 'demand'}
         >

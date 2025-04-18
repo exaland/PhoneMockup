@@ -165,17 +165,17 @@ export function PhoneModel({
     clonedObj.traverse((child: THREE.Object3D) => {
       if (child instanceof THREE.Mesh) {
         const material = new THREE.MeshPhysicalMaterial({
-          color: new THREE.Color(0.18, 0.18, 0.18),  // 调整为更深的金属灰
-          metalness: 0.95,   // 增加金属度
-          roughness: 0.35,   // 增加更多微观粗糙度，模拟金属表面的微观结构
-          clearcoat: 0,      // 完全移除清漆层
+          color: new THREE.Color(0.06, 0.06, 0.06),  // 微调加深基础颜色
+          metalness: 0.95,   
+          roughness: 0.25,   // 降低粗糙度，增加光泽感
+          clearcoat: 0,      
           clearcoatRoughness: 0,
-          reflectivity: 0.85,  // 降低反射度，使反射更自然
+          reflectivity: 0.85,  
           envMap: envMap,
-          envMapIntensity: 1.2,  // 进一步降低环境反射强度
-          ior: 1.5,   // 使用更自然的折射率
+          envMapIntensity: 0.9,  // 降低环境反射强度
+          ior: 1.5,   
           transmission: 0,
-          specularIntensity: 0.8,  // 降低高光强度
+          specularIntensity: 0.8,  
           specularColor: new THREE.Color(0.6, 0.6, 0.6),  // 使用更柔和的高光颜色
           thickness: 0,
           attenuationColor: new THREE.Color(1, 1, 1),
