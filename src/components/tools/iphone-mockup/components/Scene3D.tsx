@@ -714,6 +714,8 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                 rotationDirection={rotationDirection}
                 paddingHorizontal={paddingHorizontal}
                 paddingVertical={paddingVertical}
+                setModelRotationX={setModelRotationX}
+                setModelRotationY={setModelRotationY}
               />
             </group>
 
@@ -794,6 +796,15 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
             />
           </Suspense>
         </Canvas>
+      </div>
+
+      {/* Parameter Display Area */}
+      <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 mt-4 mb-2 text-xs text-gray-600 grid grid-cols-5 gap-2 shadow-sm">
+        <div>Zoom: <span className="font-mono text-gray-800">{ zoom.toFixed(1) }</span></div>
+        <div>H Pos: <span className="font-mono text-gray-800">{ positionX.toFixed(1) }</span></div>
+        <div>V Pos: <span className="font-mono text-gray-800">{ positionY.toFixed(1) }</span></div>
+        <div>X Rot: <span className="font-mono text-gray-800">{ (modelRotationX * 180 / Math.PI).toFixed(1) }°</span></div>
+        <div>Y Rot: <span className="font-mono text-gray-800">{ (modelRotationY * 180 / Math.PI).toFixed(1) }°</span></div>
       </div>
 
       {/* 控制面板 */}

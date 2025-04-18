@@ -13,6 +13,8 @@ interface PhoneModelProps {
   rotationDirection?: 'clockwise' | 'counterclockwise';
   paddingHorizontal: number;
   paddingVertical: number;
+  setModelRotationX?: (value: number) => void;
+  setModelRotationY?: (value: number) => void;
 }
 
 export function PhoneModel({ 
@@ -24,6 +26,8 @@ export function PhoneModel({
   rotationDirection = 'clockwise',
   paddingHorizontal,
   paddingVertical,
+  setModelRotationX,
+  setModelRotationY,
 }: PhoneModelProps) {
   const modelRef = useRef<THREE.Group | null>(null);
   const screenRef = useRef<THREE.Mesh | null>(null);
@@ -292,6 +296,9 @@ export function PhoneModel({
       });
 
       invalidate();
+      // Notify parent about rotation change
+      setModelRotationX?.(modelRef.current.rotation.x);
+      setModelRotationY?.(modelRef.current.rotation.y);
     };
 
     const onPointerUp = () => {
@@ -309,7 +316,7 @@ export function PhoneModel({
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
     };
-  }, [processedObj, gl, isDragging, previousTouch.x, previousTouch.y, invalidate, rotationSpeed, texture, paddingHorizontal, paddingVertical]);
+  }, [processedObj, gl, isDragging, previousTouch.x, previousTouch.y, invalidate, rotationSpeed, texture, paddingHorizontal, paddingVertical, setModelRotationX, setModelRotationY]);
 
   // 自动旋转
   useEffect(() => {
@@ -317,13 +324,15 @@ export function PhoneModel({
       const interval = setInterval(() => {
         if (modelRef.current) {
           // 根据旋转方向设置旋转速度
-          const rotationSpeed = rotationDirection === 'clockwise' ? -0.01 : 0.01;
-          modelRef.current.rotation.y += rotationSpeed;
+          const rotationAmount = rotationDirection === 'clockwise' ? -0.01 : 0.01;
+          modelRef.current.rotation.y += rotationAmount;
+          // Notify parent about rotation change
+          setModelRotationY?.(modelRef.current.rotation.y);
         }
       }, 16);
       return () => clearInterval(interval);
     }
-  }, [isAutoRotating, isDragging, rotationDirection]);
+  }, [isAutoRotating, isDragging, rotationDirection, setModelRotationY]);
 
   // 添加角度控制和复位功能
   useEffect(() => {
