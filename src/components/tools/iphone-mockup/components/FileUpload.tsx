@@ -25,8 +25,8 @@ const createRoundedImage = (file: File): Promise<File> => {
       if (ctx) {
         // Create rounded path
         ctx.beginPath();
-        // Set corner radius to 15% of the smaller dimension
-        const radius = Math.min(canvas.width, canvas.height) * 0.15;
+        // Set corner radius to 18% of the smaller dimension
+        const radius = Math.min(canvas.width, canvas.height) * 0.18;
         ctx.moveTo(radius, 0);
         ctx.lineTo(canvas.width - radius, 0);
         ctx.quadraticCurveTo(canvas.width, 0, canvas.width, radius);

@@ -217,8 +217,8 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
   const [metalness, setMetalness] = useState(0.9);
   const [roughness, setRoughness] = useState(0.2);
   // Separate padding states
-  const [paddingHorizontal, setPaddingHorizontal] = useState(0.07); // Initial horizontal padding (7%)
-  const [paddingVertical, setPaddingVertical] = useState(0.07);   // Initial vertical padding (7%)
+  const [paddingHorizontal, setPaddingHorizontal] = useState(0.09); // Default 94% width
+  const [paddingVertical, setPaddingVertical] = useState(0.04);   // Default 98% height
 
   // 预设场景尺寸
   const presetSizes = [
