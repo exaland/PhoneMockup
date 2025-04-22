@@ -14,6 +14,7 @@ interface PhoneModelProps {
   paddingHorizontal: number;
   paddingVertical: number;
   onRotationChange?: (deltaX: number, deltaY: number) => void;
+  onZRotationChange?: (deltaZ: number) => void;
 }
 
 export function PhoneModel({ 
@@ -26,6 +27,7 @@ export function PhoneModel({
   paddingHorizontal,
   paddingVertical,
   onRotationChange,
+  onZRotationChange,
 }: PhoneModelProps) {
   const modelRef = useRef<THREE.Group | null>(null);
   const screenRef = useRef<THREE.Mesh | null>(null);
@@ -275,18 +277,21 @@ export function PhoneModel({
     };
 
     const onPointerMove = (event: PointerEvent) => {
-      if (!isDragging || !modelRef.current) return;
+      if (!isDragging || !onRotationChange || !onZRotationChange) return;
 
-      const deltaX = (event.clientX - previousTouch.x) * rotationSpeed;
-      const deltaY = (event.clientY - previousTouch.y) * rotationSpeed;
+      const deltaX = event.clientY - previousTouch.y;
+      const deltaY = event.clientX - previousTouch.x;
 
-      // Notify parent about rotation delta
-      onRotationChange?.(deltaY, deltaX);
+      if (event.shiftKey) {
+        const deltaZ = deltaY * rotationSpeed * 2;
+        onZRotationChange(deltaZ);
+        setPreviousTouch({ x: event.clientX, y: previousTouch.y });
+      } else {
+        onRotationChange(deltaX * rotationSpeed, deltaY * rotationSpeed);
+        setPreviousTouch({ x: event.clientX, y: event.clientY });
+      }
 
-      setPreviousTouch({
-        x: event.clientX,
-        y: event.clientY
-      });
+      invalidate();
     };
 
     const onPointerUp = () => {
@@ -304,7 +309,7 @@ export function PhoneModel({
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
     };
-  }, [processedObj, gl, isDragging, previousTouch.x, previousTouch.y, invalidate, rotationSpeed, texture, paddingHorizontal, paddingVertical, onRotationChange]);
+  }, [processedObj, gl, isDragging, previousTouch.x, previousTouch.y, invalidate, rotationSpeed, texture, paddingHorizontal, paddingVertical, onRotationChange, onZRotationChange]);
 
   // 自动旋转
   useEffect(() => {

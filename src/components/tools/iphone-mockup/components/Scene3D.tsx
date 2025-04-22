@@ -61,12 +61,14 @@ function ModelAnimationController({
   rotationX, 
   rotationY, 
   positionX, 
-  positionY 
+  positionY,
+  rotationZ
 }: { 
   rotationX: number;
   rotationY: number;
   positionX: number;
   positionY: number;
+  rotationZ: number;
 }) {
   const { scene, invalidate } = useThree();
   const phoneModel = scene.getObjectByName('phoneModelGroup');
@@ -76,11 +78,12 @@ function ModelAnimationController({
     if (phoneModel) {
       phoneModel.rotation.x = rotationX;
       phoneModel.rotation.y = rotationY;
+      phoneModel.rotation.z = rotationZ;
       phoneModel.position.x = positionX;
       phoneModel.position.y = positionY;
       invalidate(); // Ensure the scene re-renders with the new state
     }
-  }, [phoneModel, rotationX, rotationY, positionX, positionY, invalidate]);
+  }, [phoneModel, rotationX, rotationY, rotationZ, positionX, positionY, invalidate]);
 
   /* Original Animation Logic (Commented out for testing)
   useEffect(() => {
@@ -175,6 +178,7 @@ interface PresetValue {
   posY: number;
   rotX: number; // Stored in radians
   rotY: number; // Stored in radians
+  rotZ: number; // Add Z rotation
 }
 
 interface Preset {
@@ -208,6 +212,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
   
   const [modelRotationX, setModelRotationX] = useState(0);
   const [modelRotationY, setModelRotationY] = useState(0);
+  const [modelRotationZ, setModelRotationZ] = useState(0);
 
   // State for presets (Add this)
   const [savedPresets, setSavedPresets] = useState<Preset[]>([]);
@@ -539,6 +544,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
     // Directly set state instead of dispatching events
     setModelRotationX(rotation.x);
     setModelRotationY(rotation.y);
+    setModelRotationZ(rotation.z);
     // Optionally reset position when applying angle presets
     setPositionX(0);
     setPositionY(0);
@@ -557,7 +563,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
       window.dispatchEvent(zRotationEvent);
     }, 50);
     */
-  }, [setModelRotationX, setModelRotationY, setPositionX, setPositionY]); // Add setters to dependency array
+  }, [setModelRotationX, setModelRotationY, setModelRotationZ, setPositionX, setPositionY]); // Add setters to dependency array
 
   // Define the rotation change handler
   const handleRotationChange = useCallback((deltaX: number, deltaY: number) => {
@@ -567,6 +573,11 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
       return Math.max(Math.min(newRotation, Math.PI / 2), -Math.PI / 2); // Clamp between -90 and +90 degrees
     });
     setModelRotationY(prev => prev + deltaY);
+  }, []); // No dependencies needed as it only uses setters
+
+  // Define the Z rotation change handler (Add this)
+  const handleZRotationChange = useCallback((deltaZ: number) => {
+    setModelRotationZ(prev => prev + deltaZ);
   }, []); // No dependencies needed as it only uses setters
 
   // --- Preset Handling Functions (Add these) ---
@@ -590,6 +601,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
         posY: positionY,
         rotX: modelRotationX, // Save radians
         rotY: modelRotationY, // Save radians
+        rotZ: modelRotationZ, // Save Z rotation in radians
       },
     };
   
@@ -613,6 +625,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
     // Directly set rotation state, ModelAnimationController will handle the animation
     setModelRotationX(preset.values.rotX);
     setModelRotationY(preset.values.rotY);
+    setModelRotationZ(preset.values.rotZ);
   };
 
   const handleDeletePreset = (presetNameToDelete: string) => {
@@ -761,6 +774,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
             <ModelAnimationController 
               rotationX={modelRotationX}
               rotationY={modelRotationY}
+              rotationZ={modelRotationZ}
               positionX={positionX}
               positionY={positionY}
             />
@@ -779,6 +793,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                 paddingHorizontal={paddingHorizontal}
                 paddingVertical={paddingVertical}
                 onRotationChange={handleRotationChange}
+                onZRotationChange={handleZRotationChange}
               />
             </group>
 
@@ -863,12 +878,13 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
 
       {/* Parameter Display & Save Preset Button (Modify this section) */}
       <div className="w-full flex items-center justify-between gap-4 mt-4 mb-2">
-        <div className="flex-grow bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 grid grid-cols-5 gap-2 shadow-sm">
+        <div className="flex-grow bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 grid grid-cols-6 gap-2 shadow-sm">
           <div>Zoom: <span className="font-mono text-gray-800">{ zoom.toFixed(1) }</span></div>
           <div>H Pos: <span className="font-mono text-gray-800">{ positionX.toFixed(1) }</span></div>
           <div>V Pos: <span className="font-mono text-gray-800">{ positionY.toFixed(1) }</span></div>
           <div>X Rot: <span className="font-mono text-gray-800">{ (modelRotationX * 180 / Math.PI).toFixed(1) }°</span></div>
           <div>Y Rot: <span className="font-mono text-gray-800">{ (modelRotationY * 180 / Math.PI).toFixed(1) }°</span></div>
+          <div>Z Rot: <span className="font-mono text-gray-800">{ (modelRotationZ * 180 / Math.PI).toFixed(1) }°</span></div>
         </div>
         <button
           onClick={handleSavePreset}
@@ -971,6 +987,7 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                   setModelRotationY(0);
                   setPositionX(0);
                   setPositionY(0);
+                  setModelRotationZ(0);
                 }}
                 className="flex items-center justify-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 shadow-sm text-sm"
               >
@@ -1023,6 +1040,62 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
                   Counter-clockwise
                 </button>
               </div>
+            </div>
+
+            {/* Add X Rotation Slider */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="rotX" className="text-sm text-gray-600">X Rotation</label>
+                <span className="text-xs text-gray-500">{(modelRotationX * 180 / Math.PI).toFixed(1)}°</span>
+              </div>
+              <input
+                id="rotX"
+                type="range"
+                min="-90"  // Limit X rotation to -90 to +90 degrees
+                max="90"
+                step="1"
+                value={modelRotationX * 180 / Math.PI}
+                onChange={(e) => setModelRotationX(Number(e.target.value) * Math.PI / 180)}
+                className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#6ee7b7]"
+              />
+            </div>
+
+            {/* Add Y Rotation Slider */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="rotY" className="text-sm text-gray-600">Y Rotation</label>
+                <span className="text-xs text-gray-500">{(modelRotationY * 180 / Math.PI).toFixed(1)}°</span>
+              </div>
+              <input
+                id="rotY"
+                type="range"
+                min="-180"
+                max="180"
+                step="1"
+                value={modelRotationY * 180 / Math.PI}
+                onChange={(e) => setModelRotationY(Number(e.target.value) * Math.PI / 180)}
+                className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#6ee7b7]"
+              />
+            </div>
+
+            {/* Z Rotation Slider */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="rotZ" className="text-sm text-gray-600">Z Rotation</label>
+                <span className="text-xs text-gray-500">{(modelRotationZ * 180 / Math.PI).toFixed(1)}°</span>
+              </div>
+              <input
+                id="rotZ"
+                type="range"
+                min="-180"
+                max="180"
+                step="1"
+                value={modelRotationZ * 180 / Math.PI}
+                onChange={(e) => setModelRotationZ(Number(e.target.value) * Math.PI / 180)}
+                className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#6ee7b7]"
+              />
+              {/* Add Hint for Shift + Drag */}
+              <p className="text-xs text-gray-500 mt-1.5 text-center">Tip: Hold <kbd className="px-1 py-0.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md">Shift</kbd> + Drag Horizontally to rotate Z-axis.</p>
             </div>
 
           </div>
