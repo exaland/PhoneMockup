@@ -286,12 +286,23 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
     const container = containerRef.current;
     if (!container) return;
 
-    let offsetX = 0, offsetY = 0;
+    let startX = 0, startY = 0, startLeft = 0, startTop = 0;
 
     const onMouseMove = (e: MouseEvent) => {
       const rect = container.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      const elRect = el.getBoundingClientRect();
+
+      // Calculate new position in px
+      let newLeft = startLeft + (e.clientX - startX);
+      let newTop = startTop + (e.clientY - startY);
+
+      // Clamp so the element stays inside the container
+      newLeft = Math.max(0, Math.min(newLeft, rect.width - elRect.width));
+      newTop = Math.max(0, Math.min(newTop, rect.height - elRect.height));
+
+      // Convert to percent
+      const x = ((newLeft + elRect.width / 2) / rect.width) * 100;
+      const y = ((newTop + elRect.height / 2) / rect.height) * 100;
       onMove(x, y);
     };
 
@@ -302,8 +313,12 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
 
     const onMouseDown = (e: MouseEvent) => {
       e.preventDefault();
-      offsetX = e.clientX;
-      offsetY = e.clientY;
+      const rect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      startLeft = elRect.left - rect.left;
+      startTop = elRect.top - rect.top;
       document.addEventListener("mousemove", onMouseMove);
       document.addEventListener("mouseup", onMouseUp);
     };
