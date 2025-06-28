@@ -108,9 +108,9 @@ export function ImageUploader({
         )}
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            拖放图片到这里，或者{' '}
+          Glissez-déposez une image ici ou{' '}
             <label className="text-blue-500 hover:text-blue-600 cursor-pointer">
-              浏览
+              <span className="underline">parcourir</span>
               <input
                 type="file"
                 className="hidden"
@@ -120,10 +120,10 @@ export function ImageUploader({
               />
             </label>
           </p>
-          <p className="text-xs text-gray-500 mt-2">
-            支持 {accept.replace('image/', '')} 格式
-            {maxSize && `，最大 ${Math.round(maxSize / 1024 / 1024)}MB`}
-          </p>
+            <p className="text-xs text-gray-500 mt-2">
+            Formats supportés : {accept.replace('image/', '')}
+            {maxSize && `, taille maximale ${Math.round(maxSize / 1024 / 1024)} Mo`}
+            </p>
         </div>
         {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
       </div>
