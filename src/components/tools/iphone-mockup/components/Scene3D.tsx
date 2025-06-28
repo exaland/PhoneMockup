@@ -276,6 +276,69 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
     }
   };
 
+
+  // Ajoutez cette fonction quelque part dans votre composant (par exemple, juste avant votre return)
+const captureAndDisplayScreenshots = async () => {
+  const sizes = [
+    { platform: 'GooglePlay', width: 1080, height: 1920 },
+    { platform: 'GooglePlay', width: 1440, height: 2560 },
+    { platform: 'Apple', width: 1242, height: 2688 },
+    { platform: 'Apple', width: 1125, height: 2436 },
+  ];
+
+  const generatedImages: { filename: string; label: string }[] = [];
+
+  for (const size of sizes) {
+    // Modifier la taille du container
+    setCanvasSize({ width: size.width + 'px', height: size.height });
+    await new Promise((resolve) => setTimeout(resolve, 600)); // Attendre le rendu
+
+    // Nom du fichier et label
+    const filename = `screenshot_${size.platform}_${size.width}x${size.height}.png`;
+    const label = `${size.platform} ${size.width}x${size.height}`;
+
+    await handleExportScreen(filename); // Fonction pour exporter en PNG
+    generatedImages.push({ filename, label });
+  }
+
+  // Mettre à jour la liste pour afficher dans la galerie
+  setScreenshots(generatedImages);
+};
+
+// State pour stocker les images générées
+const [screenshots, setScreenshots] = useState<{ filename: string; label: string }[]>([]);
+
+// La fonction d'export (adaptée pour accepter un nom de fichier)
+const handleExportScreen = (filename = 'screenshot.png') => {
+  if (!canvasRef.current || !containerRef.current) return;
+
+  const scale = 2; // Résolution
+  const width = parseInt(canvasRef.current.style.width);
+  const height = parseInt(canvasRef.current.style.height);
+
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = width * scale;
+  tempCanvas.height = height * scale;
+  const ctx = tempCanvas.getContext('2d');
+
+  if (ctx) {
+    ctx.scale(scale, scale);
+    ctx.drawImage(canvasRef.current, 0, 0, width, height);
+
+    // Si vous souhaitez ajouter overlays ou autres éléments, faites-le ici
+
+    // Sauvegarder
+    const dataUrl = tempCanvas.toDataURL('image/png');
+    // Créer un lien pour téléchargement
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
+
   const makeDraggable = (
     id: string,
     onMove: (x: number, y: number) => void
@@ -990,6 +1053,8 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
               />
             </group>
 
+            
+
             {/* 基础环境光 */}
             <ambientLight intensity={0.3} color="#ffffff" />
 
@@ -1414,6 +1479,22 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
     className="w-8 h-8 rounded-md border border-gray-300"
   />
 </div>
+<button
+  onClick={captureAndDisplayScreenshots}
+  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 shadow"
+>
+  Générer toutes les captures
+</button>
+{screenshots.length > 0 && (
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-100 mt-4">
+    {screenshots.map((shot) => (
+      <div key={shot.filename} className="border rounded shadow bg-white p-2 flex flex-col items-center">
+        <img src={shot.filename} alt={shot.label} className="w-full h-auto mb-2" />
+        <div className="text-sm text-gray-700">{shot.label}</div>
+      </div>
+    ))}
+  </div>
+)}
 </div>
 
         {/* 位置控制 */}
