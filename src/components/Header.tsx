@@ -32,6 +32,13 @@ export function Header() {
             <Link href="#mockup-tool" className="text-gray-700 hover:text-[#10b981] font-medium transition-colors">
               Phone Mockup
             </Link>
+            <Link href="/screenshot-generator" className="text-gray-700 hover:text-[#10b981] font-medium transition-colors">
+              Screenshot Generator
+            </Link>
+
+            <Link href="/appicon-generator" className="text-gray-700 hover:text-[#10b981] font-medium transition-colors">
+              App Icon Generator
+            </Link>
             <Link href="/privacy" className="text-gray-700 hover:text-[#10b981] font-medium transition-colors">
               Privacy
             </Link>

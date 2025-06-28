@@ -42,7 +42,7 @@ interface Props {
   };
 }
 
-const HomePage: NextPage<Props> = ({ canonicalUrl, alternateUrls }) => {
+const AppIconGeneratorPage: NextPage<Props> = ({ canonicalUrl, alternateUrls }) => {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -126,7 +126,7 @@ const HomePage: NextPage<Props> = ({ canonicalUrl, alternateUrls }) => {
               <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#6ee7b7]/5 rounded-full blur-3xl"></div>
               
               <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-8">
-                Phone Mockup <span className="text-[#6ee7b7]">Generator</span>
+                App Icon <span className="text-[#6ee7b7]">Generator</span>
               </h1>
               
               <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/5 mb-8 relative overflow-hidden">
@@ -173,6 +173,7 @@ const HomePage: NextPage<Props> = ({ canonicalUrl, alternateUrls }) => {
         </div>
         
         {/* Mockup Tool Section */}
+        
         <div id="mockup-tool" className="py-16 md:py-24">
           <div className="max-w-screen-xl mx-auto px-4 md:px-8">
             <div className="text-center mb-12">
@@ -185,7 +186,7 @@ const HomePage: NextPage<Props> = ({ canonicalUrl, alternateUrls }) => {
             </div>
             
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              <IphoneMockup />
+              <IconGenerator />
             </div>
           </div>
         </div>
@@ -406,4 +407,4 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
   };
 };
 
-export default HomePage;
+export default AppIconGeneratorPage;

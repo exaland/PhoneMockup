@@ -42,7 +42,7 @@ interface Props {
   };
 }
 
-const HomePage: NextPage<Props> = ({ canonicalUrl, alternateUrls }) => {
+const ScreenshotGeneratorPage: NextPage<Props> = ({ canonicalUrl, alternateUrls }) => {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -173,6 +173,7 @@ const HomePage: NextPage<Props> = ({ canonicalUrl, alternateUrls }) => {
         </div>
         
         {/* Mockup Tool Section */}
+        
         <div id="mockup-tool" className="py-16 md:py-24">
           <div className="max-w-screen-xl mx-auto px-4 md:px-8">
             <div className="text-center mb-12">
@@ -185,7 +186,7 @@ const HomePage: NextPage<Props> = ({ canonicalUrl, alternateUrls }) => {
             </div>
             
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              <IphoneMockup />
+              <ScreenshotGenerator />
             </div>
           </div>
         </div>
@@ -406,4 +407,4 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
   };
 };
 
-export default HomePage;
+export default ScreenshotGeneratorPage;
