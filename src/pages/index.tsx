@@ -7,6 +7,27 @@ import dynamic from 'next/dynamic';
 import { ArrowRight, ExternalLink, Smartphone, Monitor, Wifi, Cloud, Download, Check, Zap, Shield } from 'lucide-react';
 
 // Dynamic import of client-side component
+
+const IconGenerator = dynamic(
+  () => import('@/components/IconGenerator').then(mod => mod.IconGenerator),
+  { ssr: false }
+);
+
+const ScreenshotGenerator = dynamic(
+  () => import('@/components/tools/screenshot-generator/ScreenshotGenerator').then(mod => mod.ScreenshotGenerator),
+  { ssr: false }
+);
+
+const PngCropper = dynamic(
+  () => import('@/components/tools/png-cropper/PngCropper').then(mod => mod.PngCropper),
+  { ssr: false }
+);
+
+const BackgroundGenerator = dynamic(
+  () => import('@/components/tools/background-generator/index').then(mod => mod.BackgroundGenerator),
+  { ssr: false }
+);
+
 const IphoneMockup = dynamic(
   () => import('@/components/tools/iphone-mockup/IphoneMockup').then(mod => mod.IphoneMockup),
   { ssr: false }
