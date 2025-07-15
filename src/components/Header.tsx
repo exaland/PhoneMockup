@@ -42,15 +42,8 @@ export function Header() {
             <Link href="/privacy" className="text-gray-700 hover:text-[#10b981] font-medium transition-colors">
               Privacy
             </Link>
-            <a 
-              href="http://github.com/ihou/PhoneMockup/" 
-              className="text-gray-600 hover:text-[#10b981] transition-colors flex items-center"
-              target="_blank" 
-              rel="noopener noreferrer" 
-              aria-label="GitHub Repository"
-            >
-              <Github size={20} />
-            </a>
+           
+
           </nav>
         </div>
       </div>

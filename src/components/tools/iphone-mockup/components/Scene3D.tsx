@@ -219,6 +219,10 @@ export function Scene3D({ screenshotUrl, background }: Scene3DProps) {
   const [subtitleFontSize, setSubtitleFontSize] = useState(18);
   const [cardFontSize, setCardFontSize] = useState(16);
   const [sceneBgColor, setSceneBgColor] = useState("#f0f0f0"); // ou n’importe quel default
+  const [isFloatingCardDisabled, setIsFloatingCardDisabled] = useState(false);
+  const [isFloatingCardTwoDisabled, setIsFloatingCardTwoDisabled] = useState(false);
+
+  
 
   const [titlePos, setTitlePos] = useState({ x: 50, y: 30 }); // % of container
   const [cardPos, setCardPos] = useState({ x: 50, y: 80 });   // % of container
@@ -963,7 +967,9 @@ const handleExportScreen = (filename = 'screenshot.png') => {
             </p>
           </div>
         )}
-        <div
+
+  {isFloatingCardDisabled ? null : (
+  <div
   id="main-title"
   className="absolute text-center font-bold cursor-move z-20 pointer-events-auto px-4 py-2 rounded-xl shadow-md"
   style={{
@@ -984,12 +990,14 @@ const handleExportScreen = (filename = 'screenshot.png') => {
     {subTitle}
   </div>
 </div>
+)}
 
-<div
-  id="floating-card"
-  className="absolute rounded-xl px-4 py-3 cursor-move z-20 pointer-events-auto shadow-lg"
-  style={{
-    top: `${cardPos.y}%`,
+{isFloatingCardTwoDisabled ? null : (
+  <div
+    id="floating-card"
+    className="absolute rounded-xl px-4 py-3 cursor-move z-20 pointer-events-auto shadow-lg"
+    style={{
+      top: `${cardPos.y}%`,
     left: `${cardPos.x}%`,
     transform: 'translate(-50%, -50%)',
     color: textColor,
@@ -1000,6 +1008,7 @@ const handleExportScreen = (filename = 'screenshot.png') => {
 >
   {floatingCardText}
 </div>
+        )}
 
         <Canvas
           ref={canvasRef}
@@ -1466,6 +1475,27 @@ const handleExportScreen = (filename = 'screenshot.png') => {
       />
       
       </div>
+
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-gray-600">Floating Card Title Disabled </label>
+        <input
+          type="checkbox"
+          checked={isFloatingCardDisabled}
+          onChange={(e) => setIsFloatingCardDisabled(e.target.checked)}
+          className="w-4 h-4 rounded border border-gray-300 focus:ring-[#6ee7b7] focus:ring-opacity-50"
+        />
+        <span className="text-xs text-gray-500">Disable Floating Card</span>  
+        </div>
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-gray-600">Floating Card Subtitle Disabled </label>
+        <input
+          type="checkbox"
+          checked={isFloatingCardTwoDisabled}
+          onChange={(e) => setIsFloatingCardTwoDisabled(e.target.checked)}
+          className="w-4 h-4 rounded border border-gray-300 focus:ring-[#6ee7b7] focus:ring-opacity-50"
+        />
+        <span className="text-xs text-gray-500">Disable Floating Card 2</span>  
+        </div>
   </div>
   </div>
 
