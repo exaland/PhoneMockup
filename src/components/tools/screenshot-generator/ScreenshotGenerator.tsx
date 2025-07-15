@@ -345,7 +345,7 @@ export function ScreenshotGenerator() {
         }
       }
     }
-
+    
     // Generate and download ZIP file
     const content = await zip.generateAsync({ type: 'blob' });
     saveAs(content, 'screenshots.zip');
@@ -378,4 +378,4 @@ export function ScreenshotGenerator() {
       <canvas ref={textCanvasRef} className="hidden" />
     </div>
   );
-} 
+}   
