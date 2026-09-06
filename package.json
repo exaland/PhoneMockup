@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "engines": {
-    "node": "24.x"
+    "node": "22.x"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.2",
